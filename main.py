@@ -125,17 +125,21 @@ class Dealer:
 
 
 def ask():
-    while True:  # makes sure player choses hit or bet correctly
-        try:
-            decision = str(input("Do you want to hit or stay (h/s) : "))
-        except:
-            print("Invalid input")
 
-        if decision == "s" or decision == "h":
-            return decision
-            break
-        else:
-            print("Invalid input : must be s or h")
+    if gamePlayer.bust == True:
+        return "s"
+    else:
+        while True:  # makes sure player choses hit or bet correctly
+            try:
+                decision = str(input("Do you want to hit or stay (h/s) : "))
+            except:
+                print("Invalid input")
+
+            if decision == "s" or decision == "h":
+                return decision
+                break
+            else:
+                print("Invalid input : must be s or h")
 
 
 def deal(playerAmount=0, dealerAmount=0):
@@ -149,11 +153,18 @@ def winCalc():
 
     updateValues()
 
-    if (gamePlayer.value > gameDealer.value) and (gamePlayer.bust == False):
+    if gameDealer.bust == True:
+        gamePlayer.giveChips(amount * 2)
+        print(
+            f"Dealer bust. Player wins {amount * 2} chips! You now have {gamePlayer.chips} chips"
+        )
+    elif gamePlayer.bust == True:
+        print(f"You bust. Dealer wins, you lose. You now have {gamePlayer.chips}")
+    elif gamePlayer.value < gameDealer.value:
+        print(f"Dealer wins, you lose. You now have {gamePlayer.chips}")
+    elif gamePlayer.value > gameDealer.value:
         gamePlayer.giveChips(amount * 2)
         print(f"Player wins {amount * 2} chips! You now have {gamePlayer.chips} chips")
-    elif (gamePlayer.value < gameDealer.value) and (gameDealer.bust == False):
-        print(f"Dealer wins, you lose. You now how {gamePlayer.chips}")
     elif gamePlayer.value == gameDealer.value:
         gamePlayer.giveChips(amount)
         print(
@@ -162,18 +173,23 @@ def winCalc():
 
 
 def dealerTurn():
-    while gameDealer.value < 17:
-        deal(0, 1)
-        gameDealer.handValue()
-        gameDealer.countCards()
-        print(
-            f"The dealer draws a {gameDealer.hand[gameDealer.numCards-1].rank} of {gameDealer.hand[gameDealer.numCards-1].suit}. The total value of their hand is {gameDealer.value}"
+    if gamePlayer.bust == False:
+        while gameDealer.value < 17:
+            deal(0, 1)
+            gameDealer.handValue()
+            gameDealer.countCards()
+            print(
+                f"The dealer draws a {gameDealer.hand[gameDealer.numCards-1].rank} of {gameDealer.hand[gameDealer.numCards-1].suit}. The total value of their hand is {gameDealer.value}"
         )
+    else:
+        pass
 
 
 def cleanHands():
     gameDealer.emptyHand()
     gamePlayer.emptyHand()
+    gameDealer.bust = False
+    gamePlayer.bust = False
 
 
 def updateValues():
@@ -183,9 +199,9 @@ def updateValues():
     gameDealer.countCards()
 
 
-# =============
+# ============
 # main program
-# =============
+# ============
 
 gameDeck = Deck()  # create deck
 gameDealer = Dealer()  # create dealer
@@ -202,12 +218,18 @@ while True:  # makes sure bet is valid
 gamePlayer = Player(playerName)  # creates player
 amount = 0
 decision = None
-gamePlayer.giveChips(50)
-print(
-    "You start with 50 chips, each turn you get to choose the amount you wish to wager\nIf you win you get back double your chips, if you loose you loose all your chips."
-)
+gamePlayer.giveChips(50) # Gives player 50 starting chips
+print("You start with 50 chips, each turn you get to choose the amount you wish to wager\nIf you win you get back double your chips, if you loose you loose all your chips.")
 
 while True:  # Loops for ever
+
+    if gamePlayer.chips == 0:
+        print("GAME OVER")
+        break
+    else:
+        pass
+
+
     while True:  # makes sure bet is valid
         try:
             amount = int(
@@ -237,7 +259,12 @@ while True:  # Loops for ever
         f"The dealers card is , {gameDealer.hand[0].rank} of {gameDealer.hand[0].suit}. The value of their hand is {gameDealer.value} "
     )
 
-    playerChoice = ask()
+    updateValues()
+
+    if gamePlayer.bust == True:
+        playerChoice = "s"
+    else:
+        playerChoice = ask()
 
     while (playerChoice != "s") and (gamePlayer.bust == False):
         deal(1)
